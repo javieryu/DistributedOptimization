@@ -1,17 +1,4 @@
-using LinearAlgebra
-using LightGraphs
-using Plots
-using Distributions 
-using VoronoiDelaunay
-using SparseArrays
-using Statistics
-using Colors
-using Logging
-
-include("target-loc.jl")
-include("plotting.jl")
-include("utils.jl")
-include("next.jl")
+using DistributedOptimization, Plots
 
 function test_nonconvex()
     # Problem parameters
@@ -21,7 +8,6 @@ function test_nonconvex()
 
     # Desired outputs
     NEXT_RESULTS = true
-    SAVE_FIG = true
 
     # Generate a random problem formulation
     (comm_graph, locs) = generate_disk_graph(N)
@@ -60,12 +46,6 @@ function test_nonconvex()
     title!(stat_plt, "Stationarity")
     xaxis!(stat_plt, "Iterations")
     yaxis!(stat_plt, "J")
-
-    if SAVE_FIG
-        png(error_plt, "../../images/nonconvex_error")
-        png(traj_plt, "../../images/nonconvex_traj")
-        png(stat_plt, "../../images/nonconvex_stat")
-    end
 
     gui(error_plt)
     gui(traj_plt)

@@ -1,3 +1,5 @@
+using DistributedOptimization, Plots, LightGraphs
+
 function convergence_check()
     # Initialization
     N = 20
@@ -8,7 +10,6 @@ function convergence_check()
     DDA_RESULTS = false
     EXTRA_RESULTS = true
     DIG_RESULTS = true
-    SAVE_FIG = true
 
     # Create a random problem
     #comm_graph, tess = generate_random_delaunay_graph(N)
@@ -57,9 +58,6 @@ function convergence_check()
     xaxis!(error_plt, "Iterations")
     yaxis!(error_plt, "Norm diff to centralized")
 
-    if SAVE_FIG
-        png(error_plt, "../../images/convergence_comparisons")
-    end
 
     display(error_plt)
 end
@@ -99,8 +97,6 @@ function xhist_comparison()
     xaxis!(plt, "X1")
     yaxis!(plt, "X2")
 
-    #png(plt, "../pics/ps_xhist_comparisions")
-    png(plt, "../../images/bad_ps_xhist_comparisons")
     display(plt)
     return
 end
@@ -133,8 +129,6 @@ function topology_comparison()
     title!(error_plt, "Error to centralized")
     xaxis!(error_plt, "Iterations")
     yaxis!(error_plt, "Norm diff to centralized")
-
-    png(error_plt, "../../images/topology_comparison")
 
     display(error_plt)
 
