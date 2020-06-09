@@ -1,22 +1,4 @@
-using LinearAlgebra
-using LightGraphs
-using Plots
-using Distributions 
-using SparseArrays
-using VoronoiDelaunay
-using Statistics
-using Colors
-
-include("target-loc.jl")
-include("plotting.jl")
-include("sep-quad.jl")
-include("utils.jl")
-
-include("push-sum.jl")
-include("cadmm.jl")
-include("dda.jl")
-include("extra.jl")
-include("dig.jl")
+using DistOpt
 
 function convergence_check()
     # Initialization
@@ -78,7 +60,7 @@ function convergence_check()
     yaxis!(error_plt, "Norm diff to centralized")
 
     if SAVE_FIG
-        png(error_plt, "../pics/convergence_comparisions")
+        png(error_plt, "../images/convergence_comparisions")
     end
 
     display(error_plt)
