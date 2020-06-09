@@ -58,7 +58,7 @@ function convergence_check()
     yaxis!(error_plt, "Norm diff to centralized")
 
     if SAVE_FIG
-        png(error_plt, "../images/convergence_comparisons")
+        png(error_plt, "../../images/convergence_comparisons")
     end
 
     display(error_plt)
@@ -100,7 +100,7 @@ function xhist_comparison()
     yaxis!(plt, "X2")
 
     #png(plt, "../pics/ps_xhist_comparisions")
-    png(plt, "../pics/bad_ps_xhist_comparisons")
+    png(plt, "../../images/bad_ps_xhist_comparisons")
     display(plt)
     return
 end
@@ -134,7 +134,7 @@ function topology_comparison()
     xaxis!(error_plt, "Iterations")
     yaxis!(error_plt, "Norm diff to centralized")
 
-    png(error_plt, "../pics/topology_comparison")
+    png(error_plt, "../../images/topology_comparison")
 
     display(error_plt)
 

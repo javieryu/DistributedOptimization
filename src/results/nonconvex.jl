@@ -62,9 +62,9 @@ function test_nonconvex()
     yaxis!(stat_plt, "J")
 
     if SAVE_FIG
-        png(error_plt, "../pics/nonconvex-error")
-        png(traj_plt, "../pics/nonconvex-traj")
-        png(stat_plt, "../pics/nonconvex-stat")
+        png(error_plt, "../../images/nonconvex_error")
+        png(traj_plt, "../../images/nonconvex_traj")
+        png(stat_plt, "../../images/nonconvex_stat")
     end
 
     gui(error_plt)

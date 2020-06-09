@@ -22,41 +22,6 @@ function generate_random_graph(NV::Int, NE::Int)
     return graph
 end
 
-function rand_PSD(dim::Int64)
-    R = rand(dim, dim)
-    A = 0.5 .* (R' + R)
-    A = A + dim .* 1.0I(dim)
-    
-    return A
-end
-
-#function generate_random_delaunay_graph(N::Int64)
-#    graph = SimpleGraph(N)
-#
-#    tess = DelaunayTessellation(N)
-#    width = VoronoiDelaunay.max_coord - VoronoiDelaunay.min_coord
-#    a = Point2D[Point(VoronoiDelaunay.min_coord + rand() * width,
-#                      VoronoiDelaunay.min_coord + rand() * width) for i in 1:N]
-#    push!(tess, a)
-#
-##    plt = plot()
-##    x, y = getplotxy(voronoiedges(tess))
-##    plot!(plt, x, y, c=:red, lab="voronoi edges")
-##    x, y = getplotxy(delaunayedges(tess))
-##    plot!(plt, x, y, c=:blue, lab="delaunayedges")
-##    display(plt)
-#
-#    point_lookup = Dict(a[i] => i for i in 1:N)
-#
-#    for edge in delaunayedges(tess)
-#        i = point_lookup[geta(edge)]
-#        j = point_lookup[getb(edge)]
-#        add_edge!(graph, i, j)
-#    end
-#
-#    return graph, tess
-#end
-
 function generate_disk_graph(N::Int)
     r = 0.35
     for i = 1:1000
