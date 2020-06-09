@@ -5,7 +5,6 @@ using LightGraphs
 using Plots
 using Distributions 
 using SparseArrays
-using VoronoiDelaunay
 using Statistics
 using Colors
 
