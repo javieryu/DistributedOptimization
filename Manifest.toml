@@ -103,11 +103,6 @@ git-tree-sha1 = "247adbd2b33c0c4b42efa20d1e807acf6312145f"
 uuid = "28b8d3ca-fb5f-59d9-8090-bfdbd6d07a71"
 version = "0.50.1"
 
-[[GeometricalPredicates]]
-git-tree-sha1 = "04776c0dc233eafa617b1a52ca58db2338b08836"
-uuid = "fd0ad045-b25c-564e-8f9c-8ef5c5f21267"
-version = "0.4.0"
-
 [[GeometryTypes]]
 deps = ["ColorTypes", "FixedPointNumbers", "LinearAlgebra", "StaticArrays"]
 git-tree-sha1 = "34bfa994967e893ab2f17b864eec221b3521ba4d"
@@ -364,9 +359,3 @@ uuid = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 
 [[Unicode]]
 uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
-
-[[VoronoiDelaunay]]
-deps = ["Colors", "GeometricalPredicates", "Random"]
-git-tree-sha1 = "da5560a4c7c767476e85e2dbf4d8c8ca112e542b"
-uuid = "72f80fcb-8c52-57d9-aff0-40c1a3526986"
-version = "0.4.0"
