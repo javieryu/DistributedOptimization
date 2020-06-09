@@ -5,16 +5,6 @@ function plot_all_errors!(plt, error::Array{Float64, 2})
     plot!(plt, 1:T, error')
 end
 
-function plot_dela_graph(tess::DelaunayTessellation2D{Point2D})
-    x, y = getplotxy(delaunayedges(tess))
-
-    p = plot(legend=false, reuse=false)
-    plot!(p, x, y)
-    scatter!(p, x, y)
-
-    return p
-end
-
 function plot_bounded_errors!(plt, errors::Array{Float64, 2},
                             color::Symbol,
                             label::String)
