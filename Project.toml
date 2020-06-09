@@ -1,0 +1,4 @@
+name = "DistOpt"
+uuid = "e71022db-cd80-4fd1-944d-aa95929a62a5"
+authors = ["Javier Yu <javiercyu@gmail.com>"]
+version = "0.1.0"
