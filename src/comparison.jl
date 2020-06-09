@@ -1,5 +1,3 @@
-using DistOpt
-
 function convergence_check()
     # Initialization
     N = 20
@@ -60,7 +58,7 @@ function convergence_check()
     yaxis!(error_plt, "Norm diff to centralized")
 
     if SAVE_FIG
-        png(error_plt, "../images/convergence_comparisions")
+        png(error_plt, "../images/convergence_comparisons")
     end
 
     display(error_plt)
@@ -102,12 +100,12 @@ function xhist_comparison()
     yaxis!(plt, "X2")
 
     #png(plt, "../pics/ps_xhist_comparisions")
-    png(plt, "../pics/bad_ps_xhist_comparisions")
+    png(plt, "../pics/bad_ps_xhist_comparisons")
     display(plt)
     return
 end
 
-function topology_comparision()
+function topology_comparison()
     n = 2
 
     grid_graph = LightGraphs.grid([4, 4])
@@ -136,7 +134,7 @@ function topology_comparision()
     xaxis!(error_plt, "Iterations")
     yaxis!(error_plt, "Norm diff to centralized")
 
-    png(error_plt, "../pics/topology_comparision")
+    png(error_plt, "../pics/topology_comparison")
 
     display(error_plt)
 

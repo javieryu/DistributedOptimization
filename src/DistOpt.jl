@@ -19,4 +19,10 @@ include("dda.jl")
 include("extra.jl")
 include("dig.jl")
 
+include("comparisons.jl")
+export
+    convergence_check,
+    xhist_comparison,
+    topology_comparison
+
 end # module
