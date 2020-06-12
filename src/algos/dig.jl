@@ -18,9 +18,7 @@ mutable struct DIGNode
 end
 
 function dig(prob::SeperableQuadratic, x_inits::Dict{Int, Array{Float64, 2}};
-                 MAX_CYCLES::Int64=500, 
-                 x_cent::Union{Array{Float64, 2}, Nothing}=nothing,
-                 recordx::Bool=false, alpha::Float64=0.001)
+                 MAX_CYCLES::Int64=500, recordx::Bool=false, alpha::Float64=0.001)
 
     # Convenience variables
     graph = prob.graph # communication graph
@@ -36,9 +34,8 @@ function dig(prob::SeperableQuadratic, x_inits::Dict{Int, Array{Float64, 2}};
     neighs = [neighbors(graph, i) for i in 1:N]
 
     # Initialize convergence analysis variables
-    error = zeros(N, MAX_CYCLES - 1)
-    xhist = Dict{Int, Array{Float64, 2}}()
     if recordx
+        xhist = Dict{Int, Array{Float64, 2}}()
         for i in 1:N
             xhist[i] = zeros(n, MAX_CYCLES)
             xhist[i][:, 1] = x_inits[i]
@@ -65,37 +62,32 @@ function dig(prob::SeperableQuadratic, x_inits::Dict{Int, Array{Float64, 2}};
             end
 
             # x-update
-            x_new = nx - alpha * node.y_prev
+            node.x = nx - alpha * node.y_prev
 
             # Compute gradients
             gradxk = local_gradient(prob, node.id, node.x_prev)
-            gradxk1 = local_gradient(prob, node.id, x_new)
+            gradxk1 = local_gradient(prob, node.id, node.x)
 
             # y-update
-            y_new = ny + gradxk1 - gradxk
-
-            # Record variables for convergence analysis
-            if x_cent == nothing
-                error[node.id, t - 1] = norm(node.x_prev - x_new)
-            else
-                error[node.id, t - 1] = norm(node.x_prev - x_cent)
-            end
-
-            if recordx
-                xhist[node.id][:, t] = x_new
-            end
-
-            # Update node x and y values
-            node.x = x_new
-            node.y = y_new
+            node.y = ny + gradxk1 - gradxk
         end
 
         # Update node x_prev and y_prev
         for node in nodes
-            node.x_prev = node.x
-            node.y_prev = node.y
+           if recordx
+               xhist[node.id][:, t] = node.x
+           end
+
+           node.x_prev = node.x
+           node.y_prev = node.y
         end    
     end
 
-    return error, xhist
+    # Extract final values
+    fvals = Array{Float64}(undef, (n, N))
+    for node in nodes
+        fvals[:, node.id] = node.x
+    end
+
+    return fvals, xhist
 end

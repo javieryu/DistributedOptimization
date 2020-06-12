@@ -24,9 +24,7 @@ mutable struct PushSumNode
 end
 
 function push_sum(prob::SeperableQuadratic, x_inits::Dict{Int, Array{Float64, 2}};
-                  MAX_CYCLES::Int64=500, 
-                  x_cent::Union{Array{Float64, 2}, Nothing}=nothing,
-                  recordx::Bool=false)
+                  MAX_CYCLES::Int64=500, recordx::Bool=false)
 
     # Convenience variables
     graph = prob.graph # communication graph
@@ -38,9 +36,8 @@ function push_sum(prob::SeperableQuadratic, x_inits::Dict{Int, Array{Float64, 2}
     neighs = [neighbors(graph, i) for i in 1:N]
 
     # Initialize variables to track convergence
-    error = zeros(N, MAX_CYCLES - 1)
-    xhist = Dict{Int, Array{Float64, 2}}()
     if recordx
+        xhist = Dict{Int, Array{Float64, 2}}()
         for i in 1:N
             xhist[i] = zeros(n, MAX_CYCLES)
             xhist[i][:, 1] = x_inits[i]
@@ -74,27 +71,27 @@ function push_sum(prob::SeperableQuadratic, x_inits::Dict{Int, Array{Float64, 2}
             grad = local_gradient(prob, node.id, node.z)
 
             # X-update
-            x_new = node.w - alpha * grad 
-
-            # Update variables for convergence analysis
-            if x_cent == nothing
-                error[node.id, t - 1] = norm(node.x - x_new)
-            else
-                error[node.id, t - 1] = norm(node.x - x_cent)
-            end
+            node.x = node.w - alpha * grad 
 
             if recordx
-                xhist[node.id][:, t] = x_new
+                xhist[node.id][:, t] = node.x
             end
-
-            node.x = x_new
         end
 
         for node in nodes
+            if recordx
+                xhist[node.id][:, t] = node.x
+            end
+
             node.x_prev = node.x
             node.y_prev = node.y
         end    
     end
 
-    return error, xhist
+    fvals = Array{Float64}(undef, (n, N))
+    for node in nodes
+        fvals[:, node.id] = node.x
+    end
+
+    return fvals, xhist
 end

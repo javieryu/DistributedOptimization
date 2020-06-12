@@ -20,9 +20,7 @@ mutable struct DDANode
 end
 
 function dda(prob::SeperableQuadratic, x_inits::Dict{Int, Array{Float64, 2}};
-             MAX_CYCLES::Int64=500, 
-             x_cent::Union{Array{Float64, 2}, Nothing}=nothing,
-             recordx::Bool=false)
+             MAX_CYCLES::Int64=500, recordx::Bool=false)
 
     # Convenience variables
     graph = prob.graph # communication graph
@@ -34,10 +32,8 @@ function dda(prob::SeperableQuadratic, x_inits::Dict{Int, Array{Float64, 2}};
     neighs = [neighbors(graph, i) for i in 1:N]
 
     # Initialize variables for convergence analysis
-    error = zeros(N, MAX_CYCLES - 1)
-    xhist = Dict{Int, Array{Float64, 2}}()
-
     if recordx
+        xhist = Dict{Int, Array{Float64, 2}}()
         for i in 1:N
             xhist[i] = zeros(n, MAX_CYCLES)
             xhist[i][:, 1] = x_inits[i]
@@ -50,8 +46,6 @@ function dda(prob::SeperableQuadratic, x_inits::Dict{Int, Array{Float64, 2}};
     end
 
     # Compute weighting matrix
-    # THIS STEP IS NOT DISTRIBUTED
-    # SO THE METHOD IS NOT COMPLETELY DISTRIBUTED
     P = generate_metropolis_weights(graph)
 
     # Main optimization loop
@@ -74,29 +68,25 @@ function dda(prob::SeperableQuadratic, x_inits::Dict{Int, Array{Float64, 2}};
             node.z += -grad
 
             # X-update based on proximal function: 1/2 * ||x||^2
-            x_new = alpha .* node.z
-
-            # Update convergence analysis variables
-            if x_cent == nothing
-                error[node.id, t - 1] = norm(node.x - x_new)
-            else
-                error[node.id, t - 1] = norm(node.x - x_cent)
-            end
-
-            if recordx
-                xhist[node.id][:, t] = x_new
-            end
-
-            # node x value update
-            node.x = x_new
+            node.x = alpha .* node.z
         end
 
-        # node x_prev value update
+        # Update previous values and record xhist
         for node in nodes
-            node.x_prev = node.x
-            node.z_prev = node.z
+            if recordx
+                xhist[node.id][:, t] = node.x
+            end
+
+           node.x_prev = node.x
+           node.z_prev = node.z
         end    
     end
 
-    return error, xhist
+    # Compose array of final values
+    fvals = Array{Float64}(undef, (n, N))
+    for node in nodes
+        fvals[:, node.id] = node.x
+    end
+
+    return fvals, xhist
 end

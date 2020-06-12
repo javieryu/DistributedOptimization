@@ -18,9 +18,7 @@ mutable struct ExtraNode
 end
 
 function extra(prob::SeperableQuadratic, x_inits::Dict{Int, Array{Float64, 2}};
-               MAX_CYCLES::Int64=500, 
-               x_cent::Union{Array{Float64, 2}, Nothing}=nothing,
-               recordx::Bool=false, alpha::Float64=0.001)
+               MAX_CYCLES::Int64=500, recordx::Bool=false, alpha::Float64=0.001)
 
     # Convenience variables
     graph = prob.graph # communication graph
@@ -35,10 +33,9 @@ function extra(prob::SeperableQuadratic, x_inits::Dict{Int, Array{Float64, 2}};
     nodes = [ExtraNode(n, x_inits[i], i) for i in 1:N]
     neighs = [neighbors(graph, i) for i in 1:N]
 
-    # Setup variables to asses convergence
-    error = zeros(N, MAX_CYCLES - 1)
-    xhist = Dict{Int, Array{Float64, 2}}()
+    # Setup variables to analyze convergence
     if recordx
+        xhist = Dict{Int, Array{Float64, 2}}()
         for i in 1:N
             xhist[i] = zeros(n, MAX_CYCLES)
             xhist[i][:, 1] = x_inits[i]
@@ -62,34 +59,31 @@ function extra(prob::SeperableQuadratic, x_inits::Dict{Int, Array{Float64, 2}};
             gradxk1 = local_gradient(prob, node.id, node.xk1_prev)
 
             # x-updates
-            x_new = zeros(n, 1)
             if t == 2
                 x_new = nxk1 - alpha * gradxk1
             else
                 x_new = node.xk1_prev + nxk1 - nxk - alpha * (gradxk1 - gradxk)
             end
             
-            # Update and store relevant values
-            if x_cent == nothing
-                error[node.id, t - 1] = norm(node.xk1_prev - x_new)
-            else
-                error[node.id, t - 1] = norm(node.xk1_prev - x_cent)
-            end
-
-            if recordx
-                xhist[node.id][:, t] = x_new
-            end
-
             node.xk = node.xk1
             node.xk1 = x_new
         end
 
         # Update node variables for next optimization round
         for node in nodes
+            if recordx
+                xhist[node.id][:, t] = node.xk1
+            end
+
             node.xk_prev = node.xk
             node.xk1_prev = node.xk1
         end    
     end
 
-    return error, xhist
+    fvals = Array{Float64}(undef, (n, N))
+    for node in nodes
+        fvals[:, node.id] = node.xk1
+    end
+
+    return fvals, xhist
 end

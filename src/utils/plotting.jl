@@ -5,10 +5,12 @@ function plot_all_errors!(plt, error::Array{Float64, 2})
     plot!(plt, 1:T, error')
 end
 
-function plot_bounded_errors!(plt, errors::Array{Float64, 2},
-                            color::Symbol,
-                            label::String)
-    T = size(errors, 2)
+function plot_bounded_errors!(plt, errors::Array{Float64, 2}, color,
+                            label::String; until=nothing)
+     
+    until == nothing ? until = size(errors, 2) : nothing
+    T = until # This is a not very readable fix.
+
     ub = zeros(T, 1)
     lb = zeros(T, 1)
     m = zeros(T, 1)
@@ -29,8 +31,7 @@ function plot_stat!(plt, stat::Array{Float64, 2},
 end
 
 function plot_mean_error!(plt, errors::Array{Float64, 2},
-                            color::Symbol,
-                            label::String)
+                            color::Symbol, label::String)
     T = size(errors, 2)
     m = zeros(T, 1)
 
@@ -41,15 +42,18 @@ function plot_mean_error!(plt, errors::Array{Float64, 2},
     plot!(plt, m, c=color, lab=label)
 end
 
-function plot_xhist!(plt, xhist::Dict{Int, Array{Float64, 2}})
+function plot_xhist!(plt, xhist::Dict{Int, Array{Float64, 2}}, color;
+                     until=nothing)
     if size(xhist[1], 1) != 2
         println("Dimension of x is not 2")
         return
     end
 
+    until == nothing ? until = size(xhist[1], 2) : until
+
     for key in keys(xhist)
-        plot!(plt, xhist[key][1, :], xhist[key][2, :], c=:green)
-        scatter!(plt, [xhist[key][1, end]], [xhist[key][2, end]], c=:blue)
+        plot!(plt, xhist[key][1, 1:until], xhist[key][2, 1:until], c=color)
+        scatter!(plt, [xhist[key][1, until]], [xhist[key][2, until]], c=color)
     end
 end
 
@@ -76,16 +80,16 @@ function plot_sq_dis_traj!(plt, prob::SqDistTargetLoc,
     end
 end
 
-function plot_xcent!(plt, x_cent::Array{Float64, 2})
+function plot_xcent!(plt, x_cent::Array{Float64, 2}, color)
     if size(x_cent, 1) != 2
         println("Dimension of x_cent is not 2, cannot display")
         return
     end
 
-    scatter!(plt, [x_cent[1]], [x_cent[2]], c=:black)
+    scatter!(plt, [x_cent[1]], [x_cent[2]], c=color)
 end
 
-function plot_xinits!(plt, x_inits::Dict{Int, Array{Float64, 2}})
+function plot_xinits!(plt, x_inits::Dict{Int, Array{Float64, 2}}, color)
     if size(x_inits[1], 1) != 2
         println("Dimension of x_init is not 2, cannot display")
         return
@@ -97,5 +101,5 @@ function plot_xinits!(plt, x_inits::Dict{Int, Array{Float64, 2}})
         data[:, key] = x_inits[key]
     end
 
-    scatter!(plt, data[1, :], data[2, :], c=:white)
+    scatter!(plt, data[1, :], data[2, :], c=color)
 end

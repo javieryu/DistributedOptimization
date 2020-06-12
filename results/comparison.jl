@@ -5,12 +5,6 @@ function convergence_check()
     N = 20
     n = 4
 
-    PS_RESULTS = false
-    CADMM_RESULTS = true
-    DDA_RESULTS = false
-    EXTRA_RESULTS = true
-    DIG_RESULTS = true
-
     # Create a random problem
     #comm_graph, tess = generate_random_delaunay_graph(N)
     (comm_graph, pts) = generate_disk_graph(N)
@@ -21,7 +15,7 @@ function convergence_check()
             maximum(abs.(laplacian_spectrum(comm_graph))))
 
     # Solve the centralized problem
-    x_cent = solve_centralized(prob)
+    xcent = solve_centralized(prob)
 
     # Generate initial node values
     x_inits = solve_local(prob)
@@ -29,108 +23,28 @@ function convergence_check()
     # Solve with each algorithm and plot values
     error_plt = plot(yaxis=(:log), grid=false, tick_direction=:out)
 
-    if PS_RESULTS
-        @time ps_errors, ps_xhist = push_sum(prob, x_inits; x_cent=x_cent)
-        plot_bounded_errors!(error_plt, ps_errors, :orange, "Push Sum GD")
-    end
+    @time fvals, cadmm_xhist = cadmm(prob, x_inits; recordx=true)
+    cadmm_errors = norm2_error(cadmm_xhist, xcent)
+    plot_bounded_errors!(error_plt, cadmm_errors, :blue, "C-ADMM")
 
-    if CADMM_RESULTS
-        @time cadmm_errors, cadmm_xhist = cadmm(prob, x_inits; x_cent=x_cent)
-        plot_bounded_errors!(error_plt, cadmm_errors, :blue, "C-ADMM")
-    end
+    @time fvals, ex_xhist = extra(prob, x_inits; recordx=true)
+    ex_errors = norm2_error(ex_xhist, xcent)
+    plot_bounded_errors!(error_plt, ex_errors, :red, "Extra")
 
-    if DDA_RESULTS
-        @time dda_errors, dda_xhist = dda(prob, x_inits; x_cent=x_cent)
-        plot_bounded_errors!(error_plt, dda_errors, :green, "DDA")
-    end
+    @time fvals, dig_xhist = dig(prob, x_inits; recordx=true)
+    dig_errors = norm2_error(dig_xhist, xcent)
+    plot_bounded_errors!(error_plt, dig_errors, :purple, "DIG")
 
-    if EXTRA_RESULTS
-        @time ex_errors, ex_xhist = extra(prob, x_inits; x_cent=x_cent)
-        plot_bounded_errors!(error_plt, ex_errors, :red, "Extra")
-    end
-
-    if DIG_RESULTS
-        @time dig_errors, dig_xhist = dig(prob, x_inits; x_cent=x_cent)
-        plot_bounded_errors!(error_plt, dig_errors, :purple, "DIG")
-    end
-
-    title!(error_plt, "Error to centralized")
-    xaxis!(error_plt, "Iterations")
-    yaxis!(error_plt, "Norm diff to centralized")
-
-
-    display(error_plt)
-end
-
-function xhist_comparison()
-    # Initialization
-    N = 10
-    n = 2
-    K = 1500 #Number of iterations
-
-    # Create a random problem
-    #comm_graph, tess = generate_random_delaunay_graph(N)
-    (comm_graph, pts) = generate_disk_graph(N)
-    prob = SeperableQuadratic(n, comm_graph)
-
-    # Solve the centralized problem
-    x_cent = solve_centralized(prob)
-
-    # Generate initial node values
-    x_inits = solve_local(prob)
-
-    # Solve with different methods
-    #error, xhist = push_sum(prob, x_inits; MAX_CYCLES=K, x_cent=x_cent, recordx=true)
-    error, xhist  = cadmm(prob, x_inits; MAX_CYCLES=K, x_cent=x_cent, recordx=true)
-    #error, xhist = dda(prob, x_inits; MAX_CYCLES=K, x_cent=x_cent, recordx=true)   
-
-    #grad = 2.0 * prob.A[1] * xhist[1][:, 5] + prob.b[1]
-    #display(grad)
-
-    #plt = plot(legend=false, xlims=(-0.5, 0.5), ylims=(-0.5, 0.5)) 
-    plt = plot(legend=false) 
-    plot_xhist!(plt, xhist)
-    plot_xcent!(plt, x_cent)
-    plot_xinits!(plt, x_inits)
-
-    title!(plt, "X Trajectory")
-    xaxis!(plt, "X1")
-    yaxis!(plt, "X2")
-
-    display(plt)
-    return
-end
-
-function topology_comparison()
-    n = 2
-
-    grid_graph = LightGraphs.grid([4, 4])
-    disk_graph = lollipop_graph(4, 12)
-    barb_graph = barbell_graph(8, 8)
-
-    grid_prob = SeperableQuadratic(n, grid_graph)
-    disk_prob = deepcopy(grid_prob)
-    barb_prob = deepcopy(grid_prob)
-
-    disk_prob.graph = disk_graph
-    barb_prob.graph = barb_graph
-
-    x_cent = solve_centralized(grid_prob)
-    x_inits = solve_local(grid_prob)
-    grid_error, xh  = cadmm(grid_prob, x_inits; MAX_CYCLES=1000, x_cent=x_cent, recordx=false)
-    barb_error, xh  = cadmm(barb_prob, x_inits; MAX_CYCLES=1000, x_cent=x_cent, recordx=false)
-    disk_error, xh  = cadmm(disk_prob, x_inits; MAX_CYCLES=1000, x_cent=x_cent, recordx=false)
-
-    error_plt = plot(yaxis=(:log), grid=false, tick_direction=:out)
-    plot_mean_error!(error_plt, grid_error, :red, "Grid") 
-    plot_mean_error!(error_plt, barb_error, :green, "Barbell") 
-    plot_mean_error!(error_plt, disk_error, :blue, "Cycle") 
+#    ps_errors = norm2_error(ps_xhist, xcent)
+#    plot_bounded_errors!(error_plt, ps_errors, :orange, "Push Sum GD")
+#
+#    @time fvals, dda_xhist = dda(prob, x_inits; recordx=true)
+#    dda_errors = norm2_error(dda_xhist, xcent)
+#    plot_bounded_errors!(error_plt, dda_errors, :green, "DDA")
 
     title!(error_plt, "Error to centralized")
     xaxis!(error_plt, "Iterations")
     yaxis!(error_plt, "Norm diff to centralized")
 
     display(error_plt)
-
-    return
 end

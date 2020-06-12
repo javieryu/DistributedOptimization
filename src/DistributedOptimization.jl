@@ -16,6 +16,10 @@ export
 
 include("./utils/linalg_utils.jl")
 
+include("./utils/error_metrics.jl")
+export
+    norm2_error
+
 # Problem Definitions
 include("./problems/target_loc.jl")
 export

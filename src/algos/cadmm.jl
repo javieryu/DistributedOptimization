@@ -19,10 +19,8 @@ mutable struct CADMMNode
     end
 end
 
-function cadmm(prob::SeperableQuadratic, x_inits::Dict{Int, Array{Float64, 2}};
-              x_cent::Union{Array{Float64, 2}, Nothing}=nothing,
-              MAX_CYCLES::Int64=500, rho::Float64=0.5,
-              recordx::Bool=false)
+function cadmm(prob::SeperableQuadratic, x_inits::Dict{Int, Array{Float64, 2}}; 
+              MAX_CYCLES::Int64=500, rho::Float64=0.5, recordx::Bool=false)
 
     # Convenience variables
     graph = prob.graph # communication graph
@@ -33,11 +31,9 @@ function cadmm(prob::SeperableQuadratic, x_inits::Dict{Int, Array{Float64, 2}};
     nodes = [CADMMNode(n, x_inits[i], i) for i in 1:N]
     neighs = [neighbors(graph, i) for i in 1:N]
 
-    # Initialize variables to analyze convergence
-    errors = zeros(N, MAX_CYCLES - 1)
-    xhist = Dict{Int, Array{Float64, 2}}()
-
+    # Initialize variables to record history
     if recordx
+        xhist = Dict{Int, Array{Float64, 2}}()
         for i in 1:N
             xhist[i] = zeros(n, MAX_CYCLES)
             xhist[i][:, 1] = x_inits[i]
@@ -70,24 +66,23 @@ function cadmm(prob::SeperableQuadratic, x_inits::Dict{Int, Array{Float64, 2}};
             # X-Update
             rhs = rho .* (di .* node.x_prev + xj_sum) - node.p - prob.b[node.id]
             node.x = node.Jinv * rhs
+        end
 
-            # Store relevant variables for analysis
-            if x_cent == nothing
-                errors[node.id, t - 1] = norm(node.x_prev - node.x)
-            else
-                errors[node.id, t - 1] = norm(x_cent - node.x)
-            end
-
+        # Update node x_prevs and record relevant information
+        for node in nodes
             if recordx
                 xhist[node.id][:, t] = node.x
             end
-        end
 
-        # Update node x_prevs
-        for node in nodes
             node.x_prev = node.x
         end
     end
+    
+    # Compose array of final values
+    fvals = Array{Float64}(undef, (n, N))
+    for node in nodes
+        fvals[:, node.id] = node.x
+    end
 
-    return errors, xhist
+    return fvals, xhist
 end
