@@ -103,3 +103,48 @@ function plot_xinits!(plt, x_inits::Dict{Int, Array{Float64, 2}}, color)
 
     scatter!(plt, data[1, :], data[2, :], c=color)
 end
+
+function get_xhist_limits(xhist::Dict{Int, Matrix{Float64}})
+    # Returns the bounds on dimension for each of the dimensions
+    # across all of the decision var tajectories
+    
+    n = size(xhist[1], 1)
+    limits = zeros(n, 2) # [min, max] in each dimension
+
+    for key in keys(xhist)
+        for i in 1:n
+            ub = maximum(xhist[key][i, :])
+            lb = minimum(xhist[key][i, :])
+
+            if ub > limits[i, 2]
+                limits[i, 2] = ub
+            end
+
+            if lb < limits[i, 1]
+                limits[i, 1] = lb
+            end
+        end
+    end
+
+    return limits
+end
+
+function plot_cost_contour!(plt, prob::SeperableQuadratic,
+                         limits::Matrix{Float64}, resolution::Int)
+    if prob.dim_opt != 2
+        println("Cannot generate 2d cost map of a not 2d input.")
+        return nothing
+    end
+
+    A, b, c = get_joint_prob(prob)
+
+    x1_range = range(limits[1,1], limits[1,2], length=resolution)
+    x2_range = range(limits[2,1], limits[2,2], length=resolution)
+
+    cost(x1, x2) = begin 
+        [x1; x2]' * A * [x1; x2] + dot(b, [x1; x2])
+    end
+
+    contour!(plt, x1_range, x2_range, cost, c=:grays)
+end
+

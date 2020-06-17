@@ -44,7 +44,9 @@ export
     plot_xhist!,
     plot_xcent!,
     plot_xinits!,
-    plot_sq_dis_traj!
+    plot_sq_dis_traj!,
+    plot_cost_contour!,
+    get_xhist_limits
 
 # Distributed Optimization Algorithms
 include("./algos/push_sum.jl")
