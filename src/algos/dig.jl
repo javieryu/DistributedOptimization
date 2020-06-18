@@ -48,6 +48,12 @@ function dig(prob::SeperableQuadratic, x_inits::Dict{Int, Array{Float64, 2}};
         nodes[i].y_prev = nodes[i].y
     end
 
+    # For recording communication overhead
+    comm_total = 0
+    comm_hist = zeros(MAX_CYCLES, 1)
+    comm_unit = sizeof(nodes[1].x) + sizeof(nodes[1].y)
+    # so we don't need to call sizeof 25,000 times
+
     # Main Optimization loop
     for t in 2:MAX_CYCLES
 
@@ -56,10 +62,16 @@ function dig(prob::SeperableQuadratic, x_inits::Dict{Int, Array{Float64, 2}};
             # Communication round
             nx = zeros(n, 1)
             ny = zeros(n, 1)
-            for j in vcat(neighs[node.id], node.id)
+            for j in neighs[node.id]
                 nx += W[node.id, j] * nodes[j].x_prev
                 ny += W[node.id, j] * nodes[j].y_prev
+
+                # Count communication cost
+                comm_total += comm_unit
             end
+            # Left out of loop to avoid counting in communication cost
+            nx += W[node.id, node.id] .* node.x_prev
+            ny += W[node.id, node.id] .* node.y_prev
 
             # x-update
             node.x = nx - alpha * node.y_prev
@@ -81,6 +93,9 @@ function dig(prob::SeperableQuadratic, x_inits::Dict{Int, Array{Float64, 2}};
            node.x_prev = node.x
            node.y_prev = node.y
         end    
+
+        # Record communication history
+        comm_hist[t] = comm_total
     end
 
     # Extract final values
@@ -89,5 +104,5 @@ function dig(prob::SeperableQuadratic, x_inits::Dict{Int, Array{Float64, 2}};
         fvals[:, node.id] = node.x
     end
 
-    return fvals, xhist
+    return fvals, xhist, comm_hist
 end

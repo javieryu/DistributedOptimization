@@ -48,6 +48,11 @@ function dda(prob::SeperableQuadratic, x_inits::Dict{Int, Array{Float64, 2}};
     # Compute weighting matrix
     P = generate_metropolis_weights(graph)
 
+    # For recording communication overhead
+    comm_total = 0
+    comm_hist = zeros(MAX_CYCLES, 1)
+    comm_unit = sizeof(nodes[1].z) # so we don't need to call sizeof 25,000 times
+
     # Main optimization loop
     for t in 2:MAX_CYCLES
         # alpha update 
@@ -57,9 +62,11 @@ function dda(prob::SeperableQuadratic, x_inits::Dict{Int, Array{Float64, 2}};
         for node in nodes
             # Communication Rounds
             node.z = zeros(n, 1)
-            for j in vcat(neighs[node.id], node.id)
+            for j in neighs[node.id]
                 node.z += P[node.id, j] .* nodes[j].z_prev
+                comm_total += comm_unit
             end
+            node.z += P[node.id, node.id] .* node.z_prev
 
             # Local gradient updates
             grad = local_gradient(prob, node.id, node.x_prev)
@@ -80,6 +87,9 @@ function dda(prob::SeperableQuadratic, x_inits::Dict{Int, Array{Float64, 2}};
            node.x_prev = node.x
            node.z_prev = node.z
         end    
+
+        # Record Communication history
+        comm_hist[t] = comm_total
     end
 
     # Compose array of final values
@@ -88,5 +98,5 @@ function dda(prob::SeperableQuadratic, x_inits::Dict{Int, Array{Float64, 2}};
         fvals[:, node.id] = node.x
     end
 
-    return fvals, xhist
+    return fvals, xhist, comm_hist
 end

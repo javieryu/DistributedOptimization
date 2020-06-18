@@ -23,17 +23,17 @@ function convergence_check()
     # Solve with each algorithm and plot values
     error_plt = plot(yaxis=(:log), grid=false, tick_direction=:out)
 
-    @time fvals, cadmm_xhist = cadmm(prob, x_inits; recordx=true)
+    @time fvals, cadmm_xhist, chist = cadmm(prob, x_inits; recordx=true)
     cadmm_errors = norm2_error(cadmm_xhist, xcent)
-    plot_bounded_errors!(error_plt, cadmm_errors, :blue, "C-ADMM")
+    plot_bounded_errors!(error_plt, cadmm_errors, :blue, "C-ADMM"; chist=chist)
 
-    @time fvals, ex_xhist = extra(prob, x_inits; recordx=true)
-    ex_errors = norm2_error(ex_xhist, xcent)
-    plot_bounded_errors!(error_plt, ex_errors, :red, "Extra")
-
-    @time fvals, dig_xhist = dig(prob, x_inits; recordx=true)
-    dig_errors = norm2_error(dig_xhist, xcent)
-    plot_bounded_errors!(error_plt, dig_errors, :purple, "DIG")
+#    @time fvals, ex_xhist = extra(prob, x_inits; recordx=true)
+#    ex_errors = norm2_error(ex_xhist, xcent)
+#    plot_bounded_errors!(error_plt, ex_errors, :red, "Extra")
+#
+#    @time fvals, dig_xhist = dig(prob, x_inits; recordx=true)
+#    dig_errors = norm2_error(dig_xhist, xcent)
+#    plot_bounded_errors!(error_plt, dig_errors, :purple, "DIG")
 
 #    ps_errors = norm2_error(ps_xhist, xcent)
 #    plot_bounded_errors!(error_plt, ps_errors, :orange, "Push Sum GD")
@@ -43,7 +43,7 @@ function convergence_check()
 #    plot_bounded_errors!(error_plt, dda_errors, :green, "DDA")
 
     title!(error_plt, "Error to centralized")
-    xaxis!(error_plt, "Iterations")
+    xaxis!(error_plt, "Communication")
     yaxis!(error_plt, "Norm diff to centralized")
 
     display(error_plt)

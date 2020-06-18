@@ -6,10 +6,13 @@ function plot_all_errors!(plt, error::Array{Float64, 2})
 end
 
 function plot_bounded_errors!(plt, errors::Array{Float64, 2}, color,
-                            label::String; until=nothing)
-     
+                              label::String; until=nothing, chist=nothing)
+
     until == nothing ? until = size(errors, 2) : nothing
     T = until # This is a not very readable fix.
+
+    xaxis_vals = 1:T
+    chist == nothing ? nothing : xaxis_vals = chist[1:T]
 
     ub = zeros(T, 1)
     lb = zeros(T, 1)
@@ -21,8 +24,8 @@ function plot_bounded_errors!(plt, errors::Array{Float64, 2}, color,
         m[t] = mean(errors[:, t])
     end
 
-    plot!(plt, m, fillrange=lb, fillalpha=0.3, c=color, lab="")
-    plot!(plt, m, fillrange=ub, fillalpha=0.3, c=color, lab=label)
+    plot!(plt, xaxis_vals, m, fillrange=lb, fillalpha=0.3, c=color, lab="")
+    plot!(plt, xaxis_vals, m, fillrange=ub, fillalpha=0.3, c=color, lab=label)
 end
 
 function plot_stat!(plt, stat::Array{Float64, 2},

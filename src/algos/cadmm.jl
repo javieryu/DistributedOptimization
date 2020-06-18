@@ -20,7 +20,7 @@ mutable struct CADMMNode
 end
 
 function cadmm(prob::SeperableQuadratic, x_inits::Dict{Int, Array{Float64, 2}}; 
-              MAX_CYCLES::Int64=500, rho::Float64=0.5, recordx::Bool=false)
+              MAX_CYCLES::Int64=500, rho::Float64=0.5, recordx::Bool=true)
 
     # Convenience variables
     graph = prob.graph # communication graph
@@ -49,6 +49,11 @@ function cadmm(prob::SeperableQuadratic, x_inits::Dict{Int, Array{Float64, 2}};
         nodes[i].Jinv = inv(2.0 .* prob.A[i] + 2.0 * rho * di .* I(n))
     end
 
+    # For recording communication overhead
+    comm_total = 0
+    comm_hist = zeros(MAX_CYCLES, 1)
+    comm_unit = sizeof(nodes[1].x) # so we don't need to call sizeof 25,000 times
+
     # Optimization main loop
     for t in 2:MAX_CYCLES
         # Local node updates
@@ -57,6 +62,7 @@ function cadmm(prob::SeperableQuadratic, x_inits::Dict{Int, Array{Float64, 2}};
             xj_sum = zeros(n, 1) # Sum of neighbors' x_prev
             for neigh in neighs[node.id]
                 xj_sum += nodes[neigh].x_prev
+                comm_total += comm_unit
             end
 
             # P-Update
@@ -76,6 +82,9 @@ function cadmm(prob::SeperableQuadratic, x_inits::Dict{Int, Array{Float64, 2}};
 
             node.x_prev = node.x
         end
+
+        # Record Communication overhead
+        comm_hist[t] = comm_total
     end
     
     # Compose array of final values
@@ -84,5 +93,5 @@ function cadmm(prob::SeperableQuadratic, x_inits::Dict{Int, Array{Float64, 2}};
         fvals[:, node.id] = node.x
     end
 
-    return fvals, xhist
+    return fvals, xhist, comm_hist
 end

@@ -49,6 +49,12 @@ function push_sum(prob::SeperableQuadratic, x_inits::Dict{Int, Array{Float64, 2}
         nodes[i].deg = length(neighs[i])
     end
 
+    # For recording communication overhead
+    comm_total = 0
+    comm_hist = zeros(MAX_CYCLES, 1)
+    comm_unit = sizeof(nodes[1].x) + sizeof(nodes[1].y)
+    # so we don't need to call sizeof 25,000 times
+
     # Main optimization loop
     for t in 2:MAX_CYCLES
         # Alpha update
@@ -59,9 +65,11 @@ function push_sum(prob::SeperableQuadratic, x_inits::Dict{Int, Array{Float64, 2}
             # Communication round
             node.w = zeros(size(node.w))
             node.y = 0.0
-            for nei in neighs[node.id]  
-                node.w += nodes[nei].x_prev ./ nodes[nei].deg
-                node.y += nodes[nei].y_prev ./ nodes[nei].deg
+            for j in neighs[node.id]  
+                node.w += nodes[j].x_prev ./ nodes[j].deg
+                node.y += nodes[j].y_prev ./ nodes[j].deg
+
+                comm_total += comm_unit
             end
 
             # Z-update
@@ -86,6 +94,9 @@ function push_sum(prob::SeperableQuadratic, x_inits::Dict{Int, Array{Float64, 2}
             node.x_prev = node.x
             node.y_prev = node.y
         end    
+
+        # Record communication cost
+        comm_hist[t] = comm_unit
     end
 
     fvals = Array{Float64}(undef, (n, N))
@@ -93,5 +104,5 @@ function push_sum(prob::SeperableQuadratic, x_inits::Dict{Int, Array{Float64, 2}
         fvals[:, node.id] = node.x
     end
 
-    return fvals, xhist
+    return fvals, xhist, comm_hist
 end

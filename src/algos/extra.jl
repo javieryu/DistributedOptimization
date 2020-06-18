@@ -42,6 +42,11 @@ function extra(prob::SeperableQuadratic, x_inits::Dict{Int, Array{Float64, 2}};
         end
     end
 
+    # For recording communication overhead
+    comm_total = 0
+    comm_hist = zeros(MAX_CYCLES, 1)
+    comm_unit = sizeof(nodes[1].xk1) # so we don't need to call sizeof 25,000 times
+
     # Optimization process main loop
     for t in 2:MAX_CYCLES
         # Node by Node inner loop
@@ -49,16 +54,27 @@ function extra(prob::SeperableQuadratic, x_inits::Dict{Int, Array{Float64, 2}};
             # Communication with neighbors
             nxk = zeros(n, 1)
             nxk1 = zeros(n, 1)
-            for j in vcat(neighs[node.id], node.id)
+            for j in neighs[node.id]
                 nxk += Wt[node.id, j] * nodes[j].xk_prev
                 nxk1 += W[node.id, j] * nodes[j].xk1_prev
+                
+                # Recording communication cost here, using one communication
+                # unit because theoretical we could locally store the
+                # neighboring node values from the previous time.
+                # We don't in this implementation for readibility.
+                comm_total += comm_unit
             end
+            
+            nxk += Wt[node.id, node.id] * node.xk_prev
+            nxk1 += W[node.id, node.id] * node.xk1_prev
 
             # Compute local gradients
             gradxk = local_gradient(prob, node.id, node.xk_prev)
             gradxk1 = local_gradient(prob, node.id, node.xk1_prev)
 
             # x-updates
+            # TODO fix this x_new business (last time I tried I messed up the
+            # algorithm because i wasn't careful).
             if t == 2
                 x_new = nxk1 - alpha * gradxk1
             else
@@ -78,6 +94,9 @@ function extra(prob::SeperableQuadratic, x_inits::Dict{Int, Array{Float64, 2}};
             node.xk_prev = node.xk
             node.xk1_prev = node.xk1
         end    
+
+        # Record communication cost
+        comm_hist[t] = comm_total
     end
 
     fvals = Array{Float64}(undef, (n, N))
@@ -85,5 +104,5 @@ function extra(prob::SeperableQuadratic, x_inits::Dict{Int, Array{Float64, 2}};
         fvals[:, node.id] = node.xk1
     end
 
-    return fvals, xhist
+    return fvals, xhist, comm_hist
 end
