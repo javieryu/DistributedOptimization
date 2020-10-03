@@ -27,9 +27,9 @@ function convergence_check()
     cadmm_errors = norm2_error(cadmm_xhist, xcent)
     plot_bounded_errors!(error_plt, cadmm_errors, :blue, "C-ADMM"; chist=chist)
 
-#    @time fvals, ex_xhist = extra(prob, x_inits; recordx=true)
-#    ex_errors = norm2_error(ex_xhist, xcent)
-#    plot_bounded_errors!(error_plt, ex_errors, :red, "Extra")
+    @time fvals, ex_xhist = extra(prob, x_inits; recordx=true)
+    ex_errors = norm2_error(ex_xhist, xcent)
+    plot_bounded_errors!(error_plt, ex_errors, :red, "Extra")
 #
 #    @time fvals, dig_xhist = dig(prob, x_inits; recordx=true)
 #    dig_errors = norm2_error(dig_xhist, xcent)
